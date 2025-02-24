@@ -6,6 +6,7 @@ import math
 folderPath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Players"
 variables = ['PTS','TRB','AST','PRA','PA','PR','RA','3P']
 dictonaryOfTeams={}
+listOfTeamNames = []
 
 # Creates database to retrieve data from
 def initilizeDatabase():
@@ -15,6 +16,7 @@ def initilizeDatabase():
         filePath = os.path.join(folderPath, teamName)
         # Creates a nested dictionary where the Key is the team name and the value
         # is another dictonary of player data
+        listOfTeamNames.append(teamName)
         dictonaryOfTeams[teamName] = createPlayerDictionary(filePath)
         
 # Returns a dictionary where the key is the player name and the value is
@@ -64,11 +66,123 @@ def findStreak(teamName, playerName):
             else:
                  streakCount += 1
                  totalGames += 1
-        
+
+# Runs the program to create the menu in the terminal     
+def runProgram():
+    userInput = 0
+    while userInput != 2:
+        menu()
+        try:
+            userInput = int(input())
+            match userInput:
+                case 1:
+                    teamFinder()
+                case _:
+                    print("Invalid Option")
+        except Exception as e:
+            print("Please enter a valid number")    
+    print('Goodbye')
+    
+def printLine():
+     print("--------------------------------") 
+     
+def menu():
+    printLine()
+    print("Please select option") 
+    print("1: Prop Tool")
+    print("2: Quit")  
+    printLine()
+    
+def menu2():
+    printLine()
+    print("Please select Team") 
+    teamList()
+    print("31: Back")  
+    printLine()
+ 
+def menu3(teamDictionary, lastOption):
+    printLine()
+    print("Please select a player")
+    playerList(teamDictionary)
+    print(str(lastOption) + ": Back")
+    printLine()
+    
+def menu4():
+    printLine()
+    variableList()
+    print("9: Back")
+    printLine()
+
+# Prints the prop categories
+def variableList():
+    for i in range(len(variables)):
+        print(str(i+1) + ": " + variables[i]) 
+
+# Prints the name of the teams
+def teamList():
+    for i in range(len(listOfTeamNames)):
+        print(str(i+1) + ": " + listOfTeamNames[i])
+
+# Prints the name of the players based on the team name key
+def playerList(teamDictionary):
+    for i in range(len(teamDictionary)):
+        print(str(i+1) + ": " + list(teamDictionary)[i])
+
+# Gets user selection for team names
+def teamFinder():
+    userInput = 0
+    while userInput != 31:
+        menu2()
+        try:
+           userInput = int(input())
+           playerFinder(dictonaryOfTeams[listOfTeamNames[userInput-1]])
+        except Exception as e:
+            print("Please enter a valid number")     
+
+# Gets user selection for player names
+def playerFinder(teamDictionary):
+    userInput = 0
+    lastOption = len(teamDictionary) + 1
+    while userInput != lastOption:
+        menu3(teamDictionary, lastOption)
+        try:
+           userInput = int(input())
+           playerData(teamDictionary[list(teamDictionary)[userInput-1]])
+        except Exception as e:
+            print("Please enter a valid number") 
+   
+# Gets user selection for prop category 
+def playerData(playerDataFrame):
+    userInput = 0
+    while userInput != 9:
+        menu4()
+        try:
+            userInput = int(input())
+            manualPropFinder(playerDataFrame[[variables[userInput - 1]]])
+        except Exception as e:
+            print("Please enter a valid number") 
+
+# Gets user input for prop line
+def manualPropFinder(statData):
+    statData = statData[::-1]
+    printLine()
+    print("Enter prop line for " + statData.keys()[0])
+    userInput = int(input())
+    singleColumnSearch(statData, userInput)
+
+# Prints the amount of times the prop has hit in a certain amount of games
+def singleColumnSearch(statData, line):
+    count = 0
+    for i in range(15):
+        if statData.loc[statData.index[i]].iloc[0] > line:
+           count += 1
+           
+    print("He has had " + str(line) + " " + statData.keys()[0] + " in " + str(count) + " of 15 games")
+    
+ 
     
 initilizeDatabase()
-#findStreak("OKC","Jalen Williams")
-#print("---------------------")
-#findStreak("CLE", "Donovan Mitchell")
+
+runProgram()
 
 
