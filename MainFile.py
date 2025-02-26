@@ -50,13 +50,15 @@ def findStreak(teamName, playerName):
 # Runs the program to create the menu in the terminal     
 def runProgram():
     userInput = 0
-    while userInput != 2:
+    while userInput != 3:
         menu()
         try:
             userInput = int(input())
             match userInput:
                 case 1:
                     teamFinder()
+                case 2:
+                    updatePlayerStats()
                 case _:
                     print("Invalid Option")
         except Exception as e:
@@ -70,7 +72,8 @@ def menu():
     printLine()
     print("Please select option") 
     print("1: Prop Tool")
-    print("2: Quit")  
+    print("2: Update with Box Scores" )
+    print("3: Quit")  
     printLine()
     
 def menu2():
@@ -189,7 +192,8 @@ def updatePlayerStats():
                     newRow['G'] = gameNumber
                     newRow = newRow[columnOrder]
                     dictonaryOfTeams[teamKey][playerNames[i]].loc[gameNumber - 1] = newRow
-   
-#updatePlayerStats()
+        os.remove(os.path.join(boxScorePath, boxScore))
+    with open("teamDictionary.pkl", "wb") as f:
+        pickle.dump(dictonaryOfTeams, f)
 
 runProgram()
