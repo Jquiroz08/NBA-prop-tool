@@ -195,5 +195,5 @@ def updatePlayerStats():
         os.remove(os.path.join(boxScorePath, boxScore))
     with open("teamDictionary.pkl", "wb") as f:
         pickle.dump(dictonaryOfTeams, f)
-
+  
 runProgram()
