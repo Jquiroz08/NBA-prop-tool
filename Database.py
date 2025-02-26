@@ -3,8 +3,17 @@ import os
 import glob
 import math
 
+# Note: Rewrite function input methods to take string inputs instead of references to dataframes, as 
+#       the keys and column names are all strings. So I am access the dataframes with
+#       dictionaryOfTeams["Team Name"]["Player Name"], and read a column using
+#       dictionaryOfTeams["Team Name"]['Player Name']["Column Name"]
+#       It also makes the functions universal
+
+
 folderPath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Players"
+boxScorePath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Box Scores"
 variables = ['PTS','TRB','AST','PRA','PA','PR','RA','3P']
+columnOrder = ['G','Tm', 'Opp', 'PTS', 'TRB', 'AST', 'PRA', 'PA', 'PR', 'RA', '3P']
 dictonaryOfTeams={}
 listOfTeamNames = []
 
@@ -41,12 +50,15 @@ def createPlayerDictionary(filePath):
                 df['PR'] =  df['PTS'] + df['TRB']
                 df['PA'] =  df['PTS'] + df['AST']
                 df['RA'] =  df['TRB'] + df['AST']
+                df = df[columnOrder]
+                df.reset_index(drop=True, inplace=True)
                 playerData[playerName] = df
             except Exception as e:
                 print(f"Error reading {playerName}: {e}")
     return playerData
 
 # Prints the hit rate of player props with a given line
+# Note: Rewrite to make more efficient in runtime
 def findStreak(teamName, playerName):
     # Reverses the data frame
     playerData = dictonaryOfTeams[teamName][playerName][::-1]
@@ -174,15 +186,52 @@ def manualPropFinder(statData):
 def singleColumnSearch(statData, line):
     count = 0
     for i in range(15):
-        if statData.loc[statData.index[i]].iloc[0] > line:
+        print(statData.loc[statData.index[i]].iloc[0])
+        if statData.loc[statData.index[i]].iloc[0] >= line:
            count += 1
            
     print("He has had " + str(line) + " " + statData.keys()[0] + " in " + str(count) + " of 15 games")
-    
+
+# Gets the remaining prop values
+def getMissingColumns(df):
+    df['PRA'] = df['PTS'] + df['TRB'] + df['AST']
+    df['PR'] =  df['PTS'] + df['TRB']
+    df['PA'] =  df['PTS'] + df['AST']
+    df['RA'] =  df['TRB'] + df['AST']
+    return df
+
+# Updates the player dataframe with the stats from their most recent game box score
+# in the boxscore folder
+
+def updatePlayerStats():
+    for boxScore in os.listdir(boxScorePath):
+        if boxScore.endswith(('.xls')):
+            teamNames = boxScore.replace('.xls','')
+            teamKey = teamNames[0:3]
+            Opp = teamNames[4:7]
+            currentFilePath = os.path.join(boxScorePath, boxScore)  
+            df = pd.read_excel(currentFilePath, engine='xlrd', usecols=["Starters", "3P", "TRB", "AST", "PTS"])
+            playerNames = df.pop("Starters")
+            for i in range(len(df)):
+                if playerNames[i] in  dictonaryOfTeams[teamKey]:
+                    newRow = df.iloc[i]
+                    newRow = getMissingColumns(newRow)
+                    gameNumber = len(dictonaryOfTeams[teamKey][playerNames[i]]) + 1
+                    newRow['Tm'] = teamKey
+                    newRow['Opp'] = Opp
+                    newRow['G'] = gameNumber
+                    newRow = newRow[columnOrder]
+                    dictonaryOfTeams[teamKey][playerNames[i]].loc[gameNumber - 1] = newRow
+   
  
-    
 initilizeDatabase()
+updatePlayerStats()
 
 runProgram()
 
 
+
+#print(dictonaryOfTeams["CHO"]["LaMelo Ball"])
+#print(dictonaryOfTeams["CHO"]["Miles Bridges"])
+#print(dictonaryOfTeams["SAC"]["Zach LaVine"])
+#print(dictonaryOfTeams["SAC"]["Malik Monk"])
