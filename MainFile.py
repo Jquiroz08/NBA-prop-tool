@@ -14,6 +14,10 @@ import pickle
 
 folderPath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Players"
 boxScorePath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Box Scores"
+propPath = r"C:\Users\josep\OneDrive\Desktop\Personal\NBA-prop-tool\Prop Lines.xls"
+
+
+propLines = pd.read_excel(propPath, engine='xlrd',sheet_name= None)
 variables = ['PTS','TRB','AST','PRA','PA','PR','RA','3P']
 columnOrder = ['G','Tm', 'Opp', 'PTS', 'TRB', 'AST', 'PRA', 'PA', 'PR', 'RA', '3P']
 
@@ -50,7 +54,7 @@ def findStreak(teamName, playerName):
 # Runs the program to create the menu in the terminal     
 def runProgram():
     userInput = 0
-    while userInput != 3:
+    while userInput !=5:
         menu()
         try:
             userInput = int(input())
@@ -59,6 +63,8 @@ def runProgram():
                     teamFinder()
                 case 2:
                     updatePlayerStats()
+                case 3:
+                    propSearch()
                 case _:
                     print("Invalid Option")
         except Exception as e:
@@ -71,9 +77,11 @@ def printLine():
 def menu():
     printLine()
     print("Please select option") 
-    print("1: Prop Tool")
+    print("1: Player Tool")
     print("2: Update with Box Scores" )
-    print("3: Quit")  
+    print("3: Hit rate finder")
+    print("4: Same Game Parlay Stats")
+    print("5: Quit")  
     printLine()
     
 def menu2():
@@ -196,4 +204,28 @@ def updatePlayerStats():
     with open("teamDictionary.pkl", "wb") as f:
         pickle.dump(dictonaryOfTeams, f)
   
-runProgram()
+# Compares the entered prop lines in the excel file to the player stats in their database.
+# Prints out the player and the props in the threshold
+def propSearch():
+    for teamName in propLines.keys():
+        print(teamName)
+        printLine()
+        for i in range(len(propLines[teamName])):
+            line = propLines[teamName].loc[i, 'Line']
+            if math.isnan(line):
+                continue
+            playerName = propLines[teamName].loc[i, "Player"]
+            stat = propLines[teamName].loc[i, "Stat"]
+            data = dictonaryOfTeams[teamName][playerName][::-1].reset_index()
+            count = 0
+            for i in range(15):
+                if data.loc[i,stat] >= line:
+                    count += 1
+            if count > 12 or count < 3:
+                print (playerName + " has hit " + str(line) + " " + stat + " in " + str(count) + " of 15 games")
+        printLine()
+            
+runProgram()          
+        
+
+
