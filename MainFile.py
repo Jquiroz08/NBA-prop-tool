@@ -65,6 +65,8 @@ def runProgram():
                     updatePlayerStats()
                 case 3:
                     propSearch()
+                case 4:
+                    sameGameParlay()
                 case _:
                     print("Invalid Option")
         except Exception as e:
@@ -206,8 +208,8 @@ def updatePlayerStats():
   
 # Compares the entered prop lines in the excel file to the player stats in their database.
 # Prints out the player and the props in the threshold
-def propSearch():
-    for teamName in propLines.keys():
+def propSearch(teams=propLines.keys(), threshold = 12):
+    for teamName in teams:
         print(teamName)
         printLine()
         for i in range(len(propLines[teamName])):
@@ -221,11 +223,29 @@ def propSearch():
             for i in range(15):
                 if data.loc[i,stat] >= line:
                     count += 1
-            if count > 12 or count < 3:
+            if count > threshold or count < 15 - threshold:
                 print (playerName + " has hit " + str(line) + " " + stat + " in " + str(count) + " of 15 games")
         printLine()
             
+def sameGameParlay():
+  userInput = 0
+  nameList = []
+  for i in range(2):
+    printLine()
+    print(str(2-i) + " selections remaining")
+    menu2()
+    try:
+        userInput = int(input())
+        if(userInput == 31):
+            break
+        nameList.append(listOfTeamNames[userInput-1])
+    except Exception as e:
+            print("Please enter a valid number")  
+  propSearch(nameList, 0)
+   
+    
 runProgram()          
-        
+
+    
 
 
