@@ -31,25 +31,42 @@ with open("teamNames.pkl", "rb") as f:
 
 # Prints the hit rate of player props with a given line
 # Note: Rewrite to make more efficient in runtime
-def findStreak(teamName, playerName):
-    # Reverses the data frame
-    playerData = dictonaryOfTeams[teamName][playerName][::-1]
-    # Itterates each collumn
-    for i in variables:
-        streakCount = 0
-        strikeCount = 0
-        totalGames = 0
-        targetValue = math.ceil(playerData[i].mean() * 0.8)
-        for j in playerData.index:
-            if strikeCount > 2:
-                print(playerName +" has a had " + str(targetValue) + " " + i + " in " + str(streakCount) + " of " + str(totalGames) + " games")
-                break
-            elif(playerData.loc[j,i]< targetValue):
-                 strikeCount +=1
-                 totalGames += 1 
-            else:
-                 streakCount += 1
-                 totalGames += 1
+def findStreak(teams = propLines.keys()):
+    streakList = pd.DataFrame(columns=["Name","Stat","Line","Average","Streak","Odds"])
+    streakIndex = 0
+    for teamName in teams:
+        for i in range(len(propLines[teamName])):
+            line = propLines[teamName].loc[i, 'Line']
+            if math.isnan(line):
+                continue
+            playerName = propLines[teamName].loc[i, "Player"]
+            stat = propLines[teamName].loc[i, "Stat"]
+            data = dictonaryOfTeams[teamName][playerName][::-1].reset_index()
+            odds = propLines[teamName].loc[i, "Odds"]
+            streakLength = 1
+            index = 0
+            over = data.loc[index,stat] >= line
+            under = data.loc[index,stat] < line
+            while over:
+                index = index + 1
+                over = data.loc[index,stat] >= line
+                if over:
+                    streakLength = streakLength + 1
+            while under:
+                index = index + 1
+                under = data.loc[index,stat] < line
+                if under:
+                    streakLength = streakLength + 1
+            if streakLength >= 5:
+                streakList.loc[streakIndex] = [playerName,stat,line,round(data.loc[:streakLength , stat].mean(),2),streakLength,odds]
+                streakIndex = streakIndex + 1
+    new = streakList.sort_values(by=['Streak',"Odds"], ascending=False)
+    print(new.head(60))
+                
+            
+            
+
+    
 
 # Runs the program to create the menu in the terminal     
 def runProgram():
@@ -208,9 +225,10 @@ def updatePlayerStats():
   
 # Compares the entered prop lines in the excel file to the player stats in their database.
 # Prints out the player and the props in the threshold
-def propSearch(teams=propLines.keys(), threshold = 12):
+def propSearch(teams=propLines.keys(), threshold = 7):
+    topResults = pd.DataFrame(columns=['Name',"Prop",'Line', 'Average','Hit Rate', "Odds"])
+    index = 0
     for teamName in teams:
-        print(teamName)
         printLine()
         for i in range(len(propLines[teamName])):
             line = propLines[teamName].loc[i, 'Line']
@@ -219,13 +237,20 @@ def propSearch(teams=propLines.keys(), threshold = 12):
             playerName = propLines[teamName].loc[i, "Player"]
             stat = propLines[teamName].loc[i, "Stat"]
             data = dictonaryOfTeams[teamName][playerName][::-1].reset_index()
+            odds = propLines[teamName].loc[i, "Odds"]
             count = 0
-            for i in range(15):
+            repeat = threshold + 3
+            if repeat > len(data):
+                repeat = len(data)
+            for i in range(repeat):
                 if data.loc[i,stat] >= line:
                     count += 1
-            if count > threshold or count < 15 - threshold:
-                print (playerName + " has hit " + str(line) + " " + stat + " in " + str(count) + " of 15 games")
-        printLine()
+            if count > threshold + 1  or count < 2:
+               topResults.loc[index] = [playerName,stat,line,round(data.loc[:threshold+3 , stat].mean(),2), count/(threshold+3), odds] 
+               index += 1
+        #printLine()
+    new = topResults.sort_values(by=['Odds'], ascending=False)
+    print(new.head(60))
             
 def sameGameParlay():
   userInput = 0
@@ -242,10 +267,21 @@ def sameGameParlay():
     except Exception as e:
             print("Please enter a valid number")  
   propSearch(nameList, 0)
-   
-    
-runProgram()          
+
 
     
+#runProgram()     
+
+updatePlayerStats()
+
+
+lista = ["BOS","MIA","IND","PHI","LAC","ATL","CLE","MEM","DAL","HOU","ORL","MIN","CHO","SAS","LAL","DEN","TOR","UTA","SAC","PHO"]  
+findStreak(lista)   
+propSearch(lista ,17)
+propSearch(lista ,12)
+propSearch(lista ,7)
+
+
+
 
 
